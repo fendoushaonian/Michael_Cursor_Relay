@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Michael VIP · 卡密管理</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0b0f;--bg2:#12141c;--bg3:#1a1d2a;--bg4:#222638;
+  --text:#e8eaf0;--text2:#9498ad;--text3:#5c6080;
+  --accent:#6366f1;--accent2:#818cf8;--accent3:#a5b4fc;
+  --green:#10b981;--green-bg:rgba(16,185,129,.08);--green-border:rgba(16,185,129,.2);
+  --red:#ef4444;--red-bg:rgba(239,68,68,.06);--red-border:rgba(239,68,68,.18);
+  --amber:#f59e0b;--amber-bg:rgba(245,158,11,.07);--amber-border:rgba(245,158,11,.18);
+  --cyan:#06b6d4;--purple:#a855f7;
+  --border:rgba(255,255,255,.06);--border2:rgba(255,255,255,.1);
+  --radius:10px;--radius-lg:14px;
+  --shadow:0 2px 12px rgba(0,0,0,.3),0 0 1px rgba(255,255,255,.05);
+  --font:'Outfit',system-ui,-apple-system,sans-serif;
+  --mono:'JetBrains Mono','Fira Code',monospace;
+}
+html{font-size:15px}
+body{
+  font-family:var(--font);color:var(--text);background:var(--bg);
+  min-height:100vh;overflow-x:hidden;
+  background-image:
+    radial-gradient(ellipse at 15% 0%,rgba(99,102,241,.06),transparent 50%),
+    radial-gradient(ellipse at 85% 100%,rgba(168,85,247,.04),transparent 50%);
+}
+::selection{background:rgba(99,102,241,.3)}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bg4);border-radius:3px}
+
+/* Layout */
+.app{display:flex;min-height:100vh}
+.sidebar{
+  width:220px;position:fixed;top:0;left:0;bottom:0;
+  background:var(--bg2);border-right:1px solid var(--border);
+  display:flex;flex-direction:column;z-index:100;
+}
+.sidebar .logo{
+  padding:24px 20px 20px;display:flex;align-items:center;gap:10px;
+  border-bottom:1px solid var(--border);
+}
+.sidebar .logo-icon{
+  width:32px;height:32px;border-radius:8px;
+  background:linear-gradient(135deg,var(--accent),var(--purple));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:700;font-size:14px;color:#fff;
+}
+.sidebar .logo-text{font-weight:600;font-size:16px;letter-spacing:-.3px}
+.sidebar nav{flex:1;padding:12px 10px}
+.sidebar nav a{
+  display:flex;align-items:center;gap:10px;
+  padding:9px 12px;border-radius:8px;color:var(--text2);
+  text-decoration:none;font-size:.9rem;font-weight:400;
+  transition:all .15s;cursor:pointer;margin-bottom:2px;
+}
+.sidebar nav a:hover{background:rgba(255,255,255,.04);color:var(--text)}
+.sidebar nav a.active{background:rgba(99,102,241,.1);color:var(--accent2);font-weight:500}
+.sidebar nav a svg{width:18px;height:18px;opacity:.6;flex-shrink:0}
+.sidebar nav a.active svg{opacity:1}
+
+.main{margin-left:220px;flex:1;padding:28px 32px 40px}
+.page-title{font-size:1.5rem;font-weight:600;letter-spacing:-.5px;margin-bottom:24px}
+
+/* Cards */
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:28px}
+.stat-card{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);
+  padding:18px 20px;transition:border-color .2s;
+}
+.stat-card:hover{border-color:var(--border2)}
+.stat-card .label{font-size:.75rem;color:var(--text3);text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}
+.stat-card .value{font-size:1.8rem;font-weight:700;font-family:var(--mono);letter-spacing:-1px}
+.stat-card .value.green{color:var(--green)}
+.stat-card .value.amber{color:var(--amber)}
+.stat-card .value.accent{color:var(--accent2)}
+.stat-card .value.cyan{color:var(--cyan)}
+
+/* Toolbar */
+.toolbar{
+  display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;
+}
+.toolbar select,.toolbar input[type=number]{
+  background:var(--bg3);border:1px solid var(--border2);color:var(--text);
+  border-radius:7px;padding:7px 12px;font-family:var(--font);font-size:.85rem;
+  outline:none;transition:border-color .15s;
+}
+.toolbar select:focus,.toolbar input:focus{border-color:var(--accent)}
+.toolbar input[type=number]{width:70px;text-align:center}
+
+.btn{
+  display:inline-flex;align-items:center;gap:6px;
+  padding:7px 16px;border-radius:7px;border:none;
+  font-family:var(--font);font-size:.85rem;font-weight:500;
+  cursor:pointer;transition:all .15s;white-space:nowrap;
+}
+.btn-primary{background:var(--accent);color:#fff}
+.btn-primary:hover{background:#5558e6;transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,.05);color:var(--text2);border:1px solid var(--border2)}
+.btn-ghost:hover{background:rgba(255,255,255,.08);color:var(--text)}
+.btn-danger{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.btn-danger:hover{background:rgba(239,68,68,.12)}
+.btn-sm{padding:5px 10px;font-size:.8rem}
+
+.spacer{flex:1}
+
+/* Table */
+.table-wrap{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);
+  overflow:hidden;
+}
+table{width:100%;border-collapse:collapse}
+th{
+  text-align:left;padding:10px 14px;font-size:.72rem;
+  color:var(--text3);text-transform:uppercase;letter-spacing:.6px;font-weight:500;
+  background:var(--bg3);border-bottom:1px solid var(--border);
+}
+td{
+  padding:10px 14px;font-size:.85rem;border-bottom:1px solid var(--border);
+  vertical-align:middle;
+}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.02)}
+.key-code{
+  font-family:var(--mono);font-size:.82rem;font-weight:500;
+  color:var(--accent3);letter-spacing:.3px;
+}
+
+/* Badges */
+.badge{
+  display:inline-block;padding:2px 8px;border-radius:20px;
+  font-size:.72rem;font-weight:500;letter-spacing:.3px;
+}
+.badge-unused{background:var(--green-bg);color:var(--green);border:1px solid var(--green-border)}
+.badge-active{background:rgba(99,102,241,.08);color:var(--accent2);border:1px solid rgba(99,102,241,.2)}
+.badge-expired{background:var(--red-bg);color:var(--red);border:1px solid var(--red-border)}
+.badge-disabled{background:rgba(255,255,255,.04);color:var(--text3);border:1px solid var(--border2)}
+.badge-daily{background:rgba(6,182,212,.08);color:var(--cyan);border:1px solid rgba(6,182,212,.2)}
+.badge-weekly{background:var(--amber-bg);color:var(--amber);border:1px solid var(--amber-border)}
+.badge-monthly{background:rgba(99,102,241,.08);color:var(--accent2);border:1px solid rgba(99,102,241,.2)}
+.badge-yearly{background:rgba(168,85,247,.08);color:var(--purple);border:1px solid rgba(168,85,247,.2)}
+.badge-lifetime{background:rgba(16,185,129,.08);color:var(--green);border:1px solid rgba(16,185,129,.2)}
+
+/* Modal */
+.modal-overlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);
+  display:flex;align-items:center;justify-content:center;z-index:500;
+  opacity:0;pointer-events:none;transition:opacity .2s;
+}
+.modal-overlay.show{opacity:1;pointer-events:all}
+.modal{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);
+  padding:28px;min-width:420px;max-width:560px;width:90%;
+  box-shadow:0 20px 60px rgba(0,0,0,.5);
+  transform:translateY(10px);transition:transform .2s;
+}
+.modal-overlay.show .modal{transform:translateY(0)}
+.modal h3{font-size:1.1rem;font-weight:600;margin-bottom:16px}
+.modal .field{margin-bottom:14px}
+.modal .field label{display:block;font-size:.78rem;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px}
+.modal .field select,.modal .field input{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  color:var(--text);border-radius:7px;padding:9px 12px;
+  font-family:var(--font);font-size:.9rem;outline:none;
+}
+.modal .field select:focus,.modal .field input:focus{border-color:var(--accent)}
+.modal .actions{display:flex;gap:10px;justify-content:flex-end;margin-top:20px}
+
+/* Generated keys display */
+.gen-result{
+  background:var(--bg);border:1px solid var(--border2);border-radius:var(--radius);
+  padding:16px;margin-top:14px;max-height:260px;overflow-y:auto;
+}
+.gen-result .key-item{
+  font-family:var(--mono);font-size:.85rem;color:var(--accent3);
+  padding:4px 0;border-bottom:1px solid var(--border);
+}
+.gen-result .key-item:last-child{border-bottom:none}
+
+/* Pagination */
+.pagination{
+  display:flex;align-items:center;justify-content:center;gap:6px;
+  margin-top:16px;padding:12px 0;
+}
+.pagination button{
+  background:var(--bg3);border:1px solid var(--border);color:var(--text2);
+  padding:5px 12px;border-radius:6px;cursor:pointer;font-family:var(--font);
+  font-size:.82rem;transition:all .15s;
+}
+.pagination button:hover:not(:disabled){background:var(--bg4);color:var(--text)}
+.pagination button:disabled{opacity:.3;cursor:default}
+.pagination button.active{background:rgba(99,102,241,.15);color:var(--accent2);border-color:rgba(99,102,241,.3)}
+.pagination .page-info{font-size:.82rem;color:var(--text3);padding:0 8px}
+
+/* Toast */
+.toast-container{position:fixed;top:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px}
+.toast{
+  background:var(--bg3);border:1px solid var(--border2);border-radius:8px;
+  padding:12px 18px;font-size:.85rem;min-width:240px;
+  box-shadow:0 8px 30px rgba(0,0,0,.4);
+  animation:toastIn .3s ease;
+}
+.toast.success{border-left:3px solid var(--green);color:var(--green)}
+.toast.error{border-left:3px solid var(--red);color:var(--red)}
+.toast.info{border-left:3px solid var(--accent);color:var(--accent2)}
+@keyframes toastIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:none}}
+
+/* Copy button */
+.copy-all{margin-top:10px}
+
+/* Responsive */
+@media(max-width:768px){
+  .sidebar{width:60px}
+  .sidebar .logo-text,.sidebar nav a span{display:none}
+  .sidebar nav a{justify-content:center;padding:10px}
+  .main{margin-left:60px;padding:16px}
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .modal{min-width:unset}
+}
+
+/* Page sections */
+.page{display:none}
+.page.active{display:block}
+
+/* Detail panel */
+.detail-panel{
+  background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:24px;margin-top:16px;
+}
+.detail-panel h4{font-size:.95rem;font-weight:600;margin-bottom:12px;color:var(--text)}
+.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-bottom:20px}
+.detail-item{
+  background:var(--bg3);border-radius:8px;padding:12px;
+}
+.detail-item .dl{font-size:.72rem;color:var(--text3);text-transform:uppercase;letter-spacing:.4px;margin-bottom:4px}
+.detail-item .dv{font-size:.9rem;font-weight:500}
+
+/* Login */
+.login-page{
+  display:flex;align-items:center;justify-content:center;min-height:100vh;
+  background:var(--bg);
+}
+.login-box{
+  background:var(--bg2);border:1px solid var(--border2);border-radius:var(--radius-lg);
+  padding:40px;width:380px;text-align:center;
+  box-shadow:0 20px 60px rgba(0,0,0,.4);
+}
+.login-box .logo-icon{width:48px;height:48px;border-radius:12px;font-size:20px;margin:0 auto 16px}
+.login-box h2{font-size:1.3rem;font-weight:600;margin-bottom:6px}
+.login-box p{font-size:.85rem;color:var(--text2);margin-bottom:24px}
+.login-box input{
+  width:100%;background:var(--bg3);border:1px solid var(--border2);
+  color:var(--text);border-radius:8px;padding:11px 14px;
+  font-family:var(--mono);font-size:.9rem;outline:none;
+  text-align:center;letter-spacing:1px;margin-bottom:14px;
+}
+.login-box input:focus{border-color:var(--accent)}
+.login-box .btn{width:100%;justify-content:center;padding:11px}
+</style>
+</head>
+<body>
+
+<!-- Login -->
+<div id="loginPage" class="login-page">
+  <div class="login-box">
+    <div class="logo-icon" style="background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;color:#fff">M</div>
+    <h2>Michael VIP 管理后台</h2>
+    <p>输入管理密钥以继续</p>
+    <input id="loginKey" type="password" placeholder="Admin Key" autofocus>
+    <button class="btn btn-primary" onclick="doLogin()">验证登录</button>
+  </div>
+</div>
+
+<!-- App -->
+<div id="appShell" class="app" style="display:none">
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-icon">M</div>
+      <span class="logo-text">VIP 管理</span>
+    </div>
+    <nav>
+      <a class="active" data-page="dashboard" onclick="showPage('dashboard')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+        <span>概览</span>
+      </a>
+      <a data-page="keys" onclick="showPage('keys')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/></svg>
+        <span>卡密管理</span>
+      </a>
+      <a data-page="generate" onclick="showPage('generate')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 8v8m-4-4h8"/></svg>
+        <span>生成卡密</span>
+      </a>
+      <a data-page="logs" onclick="showPage('logs')">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+        <span>操作日志</span>
+      </a>
+    </nav>
+  </aside>
+
+  <div class="main">
+    <!-- Dashboard -->
+    <div id="page-dashboard" class="page active">
+      <h1 class="page-title">概览</h1>
+      <div class="stats" id="statsGrid"></div>
+    </div>
+
+    <!-- Keys Management -->
+    <div id="page-keys" class="page">
+      <h1 class="page-title">卡密管理</h1>
+      <div class="toolbar">
+        <input id="searchKey" type="text" placeholder="搜索卡密 / 设备名 / 设备ID..." style="width:280px;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:7px 12px;font-family:var(--font);font-size:.85rem;outline:none" oninput="debounceSearch()">
+        <select id="filterStatus" onchange="loadKeys()">
+          <option value="">全部状态</option>
+          <option value="unused">未使用</option>
+          <option value="active">已激活</option>
+          <option value="expired">已过期</option>
+          <option value="disabled">已禁用</option>
+        </select>
+        <select id="filterType" onchange="loadKeys()">
+          <option value="">全部类型</option>
+          <option value="daily">天卡</option>
+          <option value="weekly">周卡</option>
+          <option value="monthly">月卡</option>
+          <option value="yearly">年卡</option>
+          <option value="lifetime">永久</option>
+        </select>
+        <span class="spacer"></span>
+        <span id="keyCount" style="font-size:.82rem;color:var(--text3)"></span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>卡密</th><th>类型</th><th>状态</th><th>设备数</th><th>有效天数</th><th>创建时间</th><th>操作</th></tr></thead>
+          <tbody id="keysBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="keysPagination"></div>
+      <div id="keyDetail"></div>
+    </div>
+
+    <!-- Generate -->
+    <div id="page-generate" class="page">
+      <h1 class="page-title">生成卡密</h1>
+      <div style="max-width:480px">
+        <div class="field" style="margin-bottom:14px">
+          <label style="display:block;font-size:.78rem;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">卡密类型</label>
+          <select id="genType" style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:9px 12px;font-family:var(--font);font-size:.9rem;outline:none">
+            <option value="daily">天卡 (1天)</option>
+            <option value="weekly">周卡 (7天)</option>
+            <option value="monthly" selected>月卡 (30天)</option>
+            <option value="yearly">年卡 (365天)</option>
+            <option value="lifetime">永久卡</option>
+          </select>
+        </div>
+        <div class="field" style="margin-bottom:14px">
+          <label style="display:block;font-size:.78rem;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">生成数量</label>
+          <input id="genCount" type="number" value="5" min="1" max="200" style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:9px 12px;font-family:var(--font);font-size:.9rem;outline:none">
+        </div>
+        <div class="field" style="margin-bottom:14px">
+          <label style="display:block;font-size:.78rem;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">最大设备数</label>
+          <input id="genDevices" type="number" value="1" min="1" max="10" style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:9px 12px;font-family:var(--font);font-size:.9rem;outline:none">
+        </div>
+        <div class="field" style="margin-bottom:14px">
+          <label style="display:block;font-size:.78rem;color:var(--text2);margin-bottom:5px;text-transform:uppercase;letter-spacing:.4px">自定义天数 (可选, 覆盖类型默认)</label>
+          <input id="genDays" type="number" value="" min="1" placeholder="留空使用类型默认值" style="width:100%;background:var(--bg3);border:1px solid var(--border2);color:var(--text);border-radius:7px;padding:9px 12px;font-family:var(--font);font-size:.9rem;outline:none">
+        </div>
+        <button class="btn btn-primary" onclick="generateKeys()" style="padding:11px 24px;font-size:.9rem">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px"><circle cx="12" cy="12" r="10"/><path d="M12 8v8m-4-4h8"/></svg>
+          生成卡密
+        </button>
+        <div id="genResult"></div>
+      </div>
+    </div>
+
+    <!-- Logs -->
+    <div id="page-logs" class="page">
+      <h1 class="page-title">操作日志</h1>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>时间</th><th>卡密</th><th>操作</th><th>设备ID</th><th>IP</th><th>详情</th></tr></thead>
+          <tbody id="logsBody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="logsPagination"></div>
+    </div>
+  </div>
+</div>
+
+<div class="toast-container" id="toasts"></div>
+
+<script>
+const API = window.location.origin;
+let adminKey = localStorage.getItem('mvip_admin_key') || '';
+let keysPage = 1, logsPage = 1;
+
+function headers() { return { 'Content-Type': 'application/json', 'x-admin-key': adminKey }; }
+
+async function api(path, opts = {}) {
+  const res = await fetch(API + path, { headers: headers(), ...opts });
+  return res.json();
+}
+
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = 'toast ' + type;
+  el.textContent = msg;
+  document.getElementById('toasts').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 3000);
+}
+
+function doLogin() {
+  const key = document.getElementById('loginKey').value.trim();
+  if (!key) return;
+  adminKey = key;
+  localStorage.setItem('mvip_admin_key', key);
+  checkAuth();
+}
+
+async function checkAuth() {
+  try {
+    const r = await api('/api/admin/stats');
+    if (r.ok) {
+      document.getElementById('loginPage').style.display = 'none';
+      document.getElementById('appShell').style.display = 'flex';
+      loadDashboard();
+    } else {
+      document.getElementById('loginPage').style.display = 'flex';
+      document.getElementById('appShell').style.display = 'none';
+      toast('密钥无效', 'error');
+    }
+  } catch {
+    document.getElementById('loginPage').style.display = 'flex';
+    toast('无法连接服务器', 'error');
+  }
+}
+
+document.getElementById('loginKey').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + name).classList.add('active');
+  document.querySelectorAll('.sidebar nav a').forEach(a => {
+    a.classList.toggle('active', a.dataset.page === name);
+  });
+  if (name === 'dashboard') loadDashboard();
+  else if (name === 'keys') loadKeys();
+  else if (name === 'logs') loadLogs();
+}
+
+const TYPE_LABELS = { daily: '天卡', weekly: '周卡', monthly: '月卡', yearly: '年卡', lifetime: '永久' };
+const STATUS_LABELS = { unused: '未使用', active: '已激活', expired: '已过期', disabled: '已禁用' };
+
+function typeBadge(t) { return `<span class="badge badge-${t}">${TYPE_LABELS[t] || t}</span>`; }
+function statusBadge(s) { return `<span class="badge badge-${s}">${STATUS_LABELS[s] || s}</span>`; }
+function fmtDate(d) {
+  if (!d) return '-';
+  const dt = new Date(d);
+  return dt.toLocaleDateString('zh-CN') + ' ' + dt.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+}
+
+async function loadDashboard() {
+  const r = await api('/api/admin/stats');
+  if (!r.ok) return;
+  const grid = document.getElementById('statsGrid');
+  const bs = r.byStatus || {};
+  const bt = r.byType || {};
+  const acts = r.last24hActions || {};
+  grid.innerHTML = `
+    <div class="stat-card"><div class="label">总卡密</div><div class="value accent">${r.totalKeys}</div></div>
+    <div class="stat-card"><div class="label">未使用</div><div class="value green">${bs.unused || 0}</div></div>
+    <div class="stat-card"><div class="label">已激活</div><div class="value cyan">${bs.active || 0}</div></div>
+    <div class="stat-card"><div class="label">已过期</div><div class="value amber">${bs.expired || 0}</div></div>
+    <div class="stat-card"><div class="label">活跃设备</div><div class="value accent">${r.activeDevices}</div></div>
+    <div class="stat-card"><div class="label">24h 激活</div><div class="value green">${acts.activate || 0}</div></div>
+    <div class="stat-card"><div class="label">24h 验证</div><div class="value cyan">${acts.validate || 0}</div></div>
+    <div class="stat-card"><div class="label">24h 拒绝</div><div class="value amber">${acts.reject || 0}</div></div>
+  `;
+}
+
+let _searchTimer = null;
+function debounceSearch() {
+  if (_searchTimer) clearTimeout(_searchTimer);
+  _searchTimer = setTimeout(() => { keysPage = 1; loadKeys(); }, 300);
+}
+
+async function loadKeys() {
+  const status = document.getElementById('filterStatus').value;
+  const type = document.getElementById('filterType').value;
+  const search = (document.getElementById('searchKey').value || '').trim();
+  const r = await api(`/api/admin/keys?page=${keysPage}&limit=30${status ? '&status=' + status : ''}${type ? '&type=' + type : ''}${search ? '&search=' + encodeURIComponent(search) : ''}`);
+  if (!r.ok) return;
+  document.getElementById('keyCount').textContent = `共 ${r.total} 条`;
+  const tbody = document.getElementById('keysBody');
+  tbody.innerHTML = r.keys.map(k => `
+    <tr>
+      <td><span class="key-code">${k.license_key}</span></td>
+      <td>${typeBadge(k.key_type)}</td>
+      <td>${statusBadge(k.status)}</td>
+      <td>${k.active_devices || 0} / ${k.max_devices}</td>
+      <td>${k.duration_days >= 36500 ? '永久' : k.duration_days + '天'}</td>
+      <td style="color:var(--text2);font-size:.82rem">${fmtDate(k.created_at)}</td>
+      <td>
+        <button class="btn btn-ghost btn-sm" onclick="viewKey(${k.id})">详情</button>
+        ${k.status === 'active' ? `<button class="btn btn-ghost btn-sm" onclick="freezeKey(${k.id})" style="margin-left:4px;color:var(--amber);border-color:var(--amber-border)">冻结</button>` : ''}
+        ${k.status !== 'disabled' ? `<button class="btn btn-danger btn-sm" onclick="banKey(${k.id})" style="margin-left:4px">封禁</button>` : ''}
+      </td>
+    </tr>
+  `).join('');
+  renderPagination('keysPagination', r.total, r.page, r.limit, p => { keysPage = p; loadKeys(); });
+}
+
+async function viewKey(id) {
+  const r = await api('/api/admin/keys/' + id);
+  if (!r.ok) return;
+  const k = r.key;
+  const panel = document.getElementById('keyDetail');
+  panel.innerHTML = `
+    <div class="detail-panel">
+      <h4>卡密详情 · ${k.license_key}</h4>
+      <div class="detail-grid">
+        <div class="detail-item"><div class="dl">类型</div><div class="dv">${typeBadge(k.key_type)}</div></div>
+        <div class="detail-item"><div class="dl">状态</div><div class="dv">${statusBadge(k.status)}</div></div>
+        <div class="detail-item"><div class="dl">有效天数</div><div class="dv">${k.duration_days >= 36500 ? '永久' : k.duration_days + '天'}</div></div>
+        <div class="detail-item"><div class="dl">最大设备</div><div class="dv">${k.max_devices}</div></div>
+        <div class="detail-item"><div class="dl">创建时间</div><div class="dv">${fmtDate(k.created_at)}</div></div>
+      </div>
+      ${r.bindings.length > 0 ? `
+        <h4>绑定设备</h4>
+        <div class="table-wrap" style="margin-bottom:16px">
+          <table>
+            <thead><tr><th>设备ID</th><th>设备名</th><th>到期时间</th><th>最后心跳</th><th>状态</th><th>操作</th></tr></thead>
+            <tbody>
+              ${r.bindings.map(b => `
+                <tr>
+                  <td style="font-family:var(--mono);font-size:.8rem;color:var(--text2)">${(b.machine_id || '').slice(0, 16)}...</td>
+                  <td>${b.machine_name || '-'}</td>
+                  <td>${fmtDate(b.expires_at)}</td>
+                  <td style="color:var(--text2);font-size:.82rem">${fmtDate(b.last_heartbeat)}</td>
+                  <td>${b.is_active ? '<span class="badge badge-active">活跃</span>' : '<span class="badge badge-disabled">已解绑</span>'}</td>
+                  <td>${b.is_active ? `<button class="btn btn-danger btn-sm" onclick="unbindDevice(${b.id})">解绑</button>` : ''}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      ` : ''}
+      ${r.logs.length > 0 ? `
+        <h4>操作记录</h4>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>时间</th><th>操作</th><th>IP</th><th>详情</th></tr></thead>
+            <tbody>
+              ${r.logs.map(l => `
+                <tr>
+                  <td style="font-size:.82rem;color:var(--text2)">${fmtDate(l.created_at)}</td>
+                  <td>${l.action}</td>
+                  <td style="font-family:var(--mono);font-size:.8rem">${l.ip_address || '-'}</td>
+                  <td style="font-size:.82rem;color:var(--text2)">${l.details ? JSON.stringify(JSON.parse(l.details)).slice(0, 80) : '-'}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      ` : ''}
+      <div style="margin-top:16px;display:flex;gap:8px;flex-wrap:wrap">
+        ${k.status === 'active' ? `<button class="btn btn-ghost" onclick="freezeKey(${k.id})" style="color:var(--amber);border-color:var(--amber-border)">&#x2744; 冻结</button>` : ''}
+        ${k.status === 'disabled' ? `<button class="btn btn-ghost" onclick="unfreezeKey(${k.id})" style="color:var(--green);border-color:var(--green-border)">&#x2600; 解冻</button>` : ''}
+        ${k.status !== 'disabled' ? `<button class="btn btn-danger" onclick="banKey(${k.id})">&#x26D4; 封禁</button>` : ''}
+        <button class="btn btn-danger" onclick="deleteKey(${k.id})">&#x1F5D1; 删除卡密</button>
+        <button class="btn btn-ghost" onclick="document.getElementById('keyDetail').innerHTML=''">关闭</button>
+      </div>
+    </div>
+  `;
+  panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+
+async function freezeKey(id) {
+  if (!confirm('确认冻结此卡密？\n冻结后用户无法使用，但设备绑定保留。可随时解冻恢复。')) return;
+  await api('/api/admin/keys/' + id, { method: 'PATCH', body: JSON.stringify({ status: 'disabled' }) });
+  toast('已冻结', 'success');
+  loadKeys();
+  document.getElementById('keyDetail').innerHTML = '';
+}
+
+async function unfreezeKey(id) {
+  if (!confirm('确认解冻？将恢复为"已激活"状态。')) return;
+  await api('/api/admin/keys/' + id, { method: 'PATCH', body: JSON.stringify({ status: 'active' }) });
+  toast('已解冻', 'success');
+  loadKeys();
+  document.getElementById('keyDetail').innerHTML = '';
+}
+
+async function banKey(id) {
+  if (!confirm('确认封禁此卡密？\n\n封禁将：\n• 禁用卡密\n• 解绑所有设备\n• 用户立即失去 VIP 权限\n\n此操作可通过"解冻"恢复。')) return;
+  await api('/api/admin/keys/' + id + '/ban', { method: 'POST' });
+  toast('已封禁', 'success');
+  loadKeys();
+  document.getElementById('keyDetail').innerHTML = '';
+}
+
+async function deleteKey(id) {
+  if (!confirm('确认删除？此操作不可恢复！\n删除后卡密和所有绑定记录将永久移除。')) return;
+  await api('/api/admin/keys/' + id, { method: 'DELETE' });
+  toast('已删除', 'success');
+  document.getElementById('keyDetail').innerHTML = '';
+  loadKeys();
+}
+
+async function unbindDevice(bindingId) {
+  if (!confirm('确认解绑此设备？')) return;
+  await api('/api/admin/bindings/' + bindingId, { method: 'DELETE' });
+  toast('已解绑', 'success');
+  loadKeys();
+}
+
+async function generateKeys() {
+  const type = document.getElementById('genType').value;
+  const count = parseInt(document.getElementById('genCount').value) || 5;
+  const maxDevices = parseInt(document.getElementById('genDevices').value) || 1;
+  const durationDays = document.getElementById('genDays').value ? parseInt(document.getElementById('genDays').value) : undefined;
+
+  const body = { type, count, maxDevices };
+  if (durationDays) body.durationDays = durationDays;
+
+  const r = await api('/api/admin/generate', { method: 'POST', body: JSON.stringify(body) });
+  if (!r.ok) { toast('生成失败', 'error'); return; }
+
+  toast(`成功生成 ${r.keys.length} 张${TYPE_LABELS[type] || type}`, 'success');
+  const result = document.getElementById('genResult');
+  result.innerHTML = `
+    <div class="gen-result">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <span style="font-size:.82rem;color:var(--text2)">已生成 ${r.keys.length} 张 · ${TYPE_LABELS[type]} · ${r.durationDays}天 · 最多${maxDevices}设备</span>
+        <button class="btn btn-ghost btn-sm" onclick="copyAllKeys()">复制全部</button>
+      </div>
+      ${r.keys.map(k => `<div class="key-item">${k}</div>`).join('')}
+    </div>
+  `;
+}
+
+function copyAllKeys() {
+  const items = document.querySelectorAll('.gen-result .key-item');
+  const text = Array.from(items).map(el => el.textContent).join('\n');
+  navigator.clipboard.writeText(text).then(() => toast('已复制到剪贴板', 'success'));
+}
+
+async function loadLogs() {
+  const r = await api(`/api/admin/logs?page=${logsPage}&limit=30`);
+  if (!r.ok) return;
+  const tbody = document.getElementById('logsBody');
+  tbody.innerHTML = r.logs.map(l => {
+    let details = '-';
+    try { details = l.details ? JSON.stringify(JSON.parse(l.details)).slice(0, 60) : '-'; } catch {}
+    return `
+      <tr>
+        <td style="font-size:.82rem;color:var(--text2)">${fmtDate(l.created_at)}</td>
+        <td><span class="key-code">${l.license_key || '-'}</span></td>
+        <td>${l.action}</td>
+        <td style="font-family:var(--mono);font-size:.78rem;color:var(--text2)">${(l.machine_id || '-').slice(0, 12)}</td>
+        <td style="font-family:var(--mono);font-size:.8rem">${l.ip_address || '-'}</td>
+        <td style="font-size:.8rem;color:var(--text3)">${details}</td>
+      </tr>
+    `;
+  }).join('');
+  renderPagination('logsPagination', r.total, logsPage, 30, p => { logsPage = p; loadLogs(); });
+}
+
+function renderPagination(containerId, total, current, limit, onPage) {
+  const pages = Math.ceil(total / limit);
+  if (pages <= 1) { document.getElementById(containerId).innerHTML = ''; return; }
+  const el = document.getElementById(containerId);
+  let html = `<button ${current <= 1 ? 'disabled' : ''} onclick="void(0)">«</button>`;
+  const start = Math.max(1, current - 2);
+  const end = Math.min(pages, current + 2);
+  for (let i = start; i <= end; i++) {
+    html += `<button class="${i === current ? 'active' : ''}" onclick="void(0)">${i}</button>`;
+  }
+  html += `<button ${current >= pages ? 'disabled' : ''} onclick="void(0)">»</button>`;
+  html += `<span class="page-info">${current} / ${pages}</span>`;
+  el.innerHTML = html;
+  el.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const t = btn.textContent;
+      if (t === '«') onPage(Math.max(1, current - 1));
+      else if (t === '»') onPage(Math.min(pages, current + 1));
+      else { const n = parseInt(t); if (!isNaN(n)) onPage(n); }
+    });
+  });
+}
+
+if (adminKey) checkAuth();
+</script>
+</body>
+</html>

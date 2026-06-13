@@ -1,0 +1,17 @@
+{
+  "name": "michael-vip-license-server",
+  "version": "1.0.0",
+  "description": "Michael Cursor VIP 卡密验证服务",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "crypto": "^1.0.1",
+    "express": "^4.21.0",
+    "express-rate-limit": "^7.5.0",
+    "mysql2": "^3.11.0",
+    "ws": "^8.21.0"
+  }
+}
